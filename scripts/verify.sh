@@ -17,7 +17,16 @@ else
 fi
 # resourceNames limits get on a single ConfigMap (not all ConfigMaps).
 identity="system:serviceaccount:kubesec-training:audit-reader"
-kubectl --context kind-kubesec-training auth can-i get configmaps/approved-config --as="$identity" -n kubesec-training | grep -qx yes
+echo "Inspecting named-resource RBAC (resourceNames)"
+kubectl --context kind-kubesec-training -n kubesec-training get role specific-config-reader -o yaml
+kubectl --context kind-kubesec-training -n kubesec-training get rolebinding specific-config-reader-binding -o yaml
+result="$(kubectl --context kind-kubesec-training auth can-i get configmaps/approved-config --as="$identity" -n kubesec-training)"
+echo "Named ConfigMap permission: $result"
+if [[ "$result" != "yes" ]]; then
+  echo "RBAC check for approved-config failed; checking live GET endpoint" >&2
+  kubectl --context kind-kubesec-training -n kubesec-training get configmap approved-config --as="$identity" -v=0 || true
+  exit 1
+fi
 for forbidden in \
   "get configmaps/other-config" \
   "list configmaps" \
