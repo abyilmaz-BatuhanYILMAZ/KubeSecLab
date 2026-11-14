@@ -1,0 +1,23 @@
+# DELIBERATELY INSECURE: scan offline only. Never apply this broad role to a real cluster.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: insecure-everything
+rules:
+  - apiGroups: ["*"]
+    resources: ["*"]
+    verbs: ["*"]
+---
+# This resource is also offline-only for security training.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: insecure-cluster-admin-binding
+subjects:
+  - kind: ServiceAccount
+    name: sample
+    namespace: kubesec-training
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin

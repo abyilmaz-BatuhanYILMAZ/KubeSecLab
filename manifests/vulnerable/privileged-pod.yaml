@@ -1,0 +1,25 @@
+# DELIBERATELY INSECURE: This must NOT be admitted in the restricted training namespace.
+# Use only `kubectl apply --dry-run=server` to demonstrate admission rejection.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: insecure-pod
+  namespace: kubesec-training
+spec:
+  hostPID: true
+  automountServiceAccountToken: true
+  volumes:
+    - name: host-logs
+      hostPath:
+        path: /var/log
+  containers:
+    - name: demo
+      image: busybox:latest
+      command: ["sh", "-c", "sleep 3600"]
+      securityContext:
+        privileged: true
+        allowPrivilegeEscalation: true
+        runAsNonRoot: false
+      volumeMounts:
+        - name: host-logs
+          mountPath: /host-logs
