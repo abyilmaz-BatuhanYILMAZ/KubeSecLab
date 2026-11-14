@@ -1,0 +1,40 @@
+# Namespace-scoped, resourceNames-bound read access.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: audit-reader
+  namespace: kubesec-training
+automountServiceAccountToken: false
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: approved-config
+  namespace: kubesec-training
+data:
+  status: approved
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: specific-config-reader
+  namespace: kubesec-training
+rules:
+  - apiGroups: [""]
+    resources: [configmaps]
+    resourceNames: [approved-config]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: specific-config-reader-binding
+  namespace: kubesec-training
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: specific-config-reader
+subjects:
+  - kind: ServiceAccount
+    name: audit-reader
+    namespace: kubesec-training
