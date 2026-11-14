@@ -1,0 +1,44 @@
+name: Live kind Kubernetes integration
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "scripts/**"
+      - "manifests/**"
+      - ".github/workflows/kind-integration.yml"
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  pod-security-and-rbac:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kind and kubectl
+        uses: helm/kind-action@v1.14.0
+        with:
+          install_only: true
+      - name: Create disposable Kubernetes cluster
+        run: bash scripts/setup.sh
+      - name: Confirm readiness and enforce admission and scoped RBAC
+        run: |
+          kubectl --context kind-kubesec-training wait --for=condition=Ready pod/secure-pod \
+            -n kubesec-training --timeout=180s
+          bash scripts/verify.sh
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          kubectl --context kind-kubesec-training get nodes -o wide || true
+          kubectl --context kind-kubesec-training get pods -A || true
+          kubectl --context kind-kubesec-training get events -n kubesec-training --sort-by=.lastTimestamp || true
+      - name: Delete temporary cluster
+        if: always()
+        run: |
+          if kind get clusters 2>/dev/null | grep -qx kubesec-training; then
+            bash scripts/cleanup.sh
+          fi
