@@ -17,10 +17,9 @@ else
 fi
 # resourceNames limits get on a single ConfigMap (not all ConfigMaps).
 identity="system:serviceaccount:kubesec-training:audit-reader"
-kubectl --context kind-kubesec-training auth can-i get configmaps \
-  --resource-name=approved-config --as="$identity" -n kubesec-training | grep -qx yes
+kubectl --context kind-kubesec-training auth can-i get configmaps/approved-config --as="$identity" -n kubesec-training | grep -qx yes
 for forbidden in \
-  "get configmaps --resource-name=other-config" \
+  "get configmaps/other-config" \
   "list configmaps" \
   "get secrets"; do
   read -r -a argv <<< "$forbidden"

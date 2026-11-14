@@ -20,13 +20,13 @@ Bu manifestte `audit-reader` ServiceAccount'u, `specific-config-reader` Role ve 
 ```bash
 ctx=kind-kubesec-training
 sa=system:serviceaccount:kubesec-training:audit-reader
-kubectl --context "$ctx" auth can-i get configmaps --resource-name=approved-config --as="$sa" -n kubesec-training
-kubectl --context "$ctx" auth can-i get configmaps --resource-name=other-config --as="$sa" -n kubesec-training
+kubectl --context "$ctx" auth can-i get configmaps/approved-config --as="$sa" -n kubesec-training
+kubectl --context "$ctx" auth can-i get configmaps/other-config --as="$sa" -n kubesec-training
 kubectl --context "$ctx" auth can-i list configmaps --as="$sa" -n kubesec-training
 kubectl --context "$ctx" auth can-i get secrets --as="$sa" -n kubesec-training
 ```
 
-**Beklenen:** `yes / no / no / no`. `resourceNames`, listeleme gibi koleksiyon operasyonlarında özel dikkat gerektirir; yalnızca hedefteki **get** kullanımını göstermek için uygulanmıştır.
+**Beklenen:** `yes / no / no / no`. `kubectl auth can-i` belirli kaynak adı için `TYPE/NAME` kullanır; `--resource-name` bayrağı yoktur. `resourceNames`, listeleme gibi koleksiyon operasyonlarında özel dikkat gerektirir; yalnızca hedefteki **get** kullanımını göstermek için uygulanmıştır.
 
 `kubectl auth can-i --as` ile impersonation yapmayı sağlayan yönetici yetkisi gerekir; bu nedenle komutları yalnızca disposable kind yönetici context'inde kullan.
 
