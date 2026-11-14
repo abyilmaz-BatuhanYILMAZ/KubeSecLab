@@ -81,3 +81,21 @@ Bu komut yalnızca `kubesec-training` adlı **yerel kind cluster'ını** siler. 
 - [RBAC Good Practices](https://kubernetes.io/docs/concepts/security/rbac-good-practices/)
 
 **License:** MIT. A teaching resource with intentional vulnerabilities for analysis; not a production deployment template.
+
+
+## İleri düzey laboratuvarlar
+
+| Ders | Konu | Canlı test kanıtı |
+| --- | --- | --- |
+| [05 — NetworkPolicy ve Calico](lessons/05-networkpolicy.md) | Default deny, podSelector ile allow, gerçek HTTP erişim testi | [Canlı NetworkPolicy workflow](.github/workflows/networkpolicy-integration.yml) |
+| [06 — Gelişmiş RBAC](lessons/06-advanced-rbac.md) | resourceNames, escalate/bind/impersonate, tehlikeli ClusterRoleBinding | [Canlı kind/RBAC workflow](.github/workflows/kind-integration.yml) |
+
+Kubernetes kaynaklarının yalnızca kabul edilmesi, ağ politikalarının gerçekten **uygulandığını** göstermez. NetworkPolicy dersi Calico CNI ile ayrı bir disposable cluster açar ve onaylı/onaysız istemcilerin **gerçek trafik sonucunu** sınar.
+
+```bash
+bash scripts/setup-networkpolicy.sh
+bash scripts/verify-networkpolicy.sh
+kind delete cluster --name kubesec-net
+```
+
+Hatalı `manifests/vulnerable/` örnekleri **offline-only** kalmalıdır. Live CI yalnızca `manifests/safe/` ve ağ dersinin açıkça güvenli çalışma manifestlerini uygular.

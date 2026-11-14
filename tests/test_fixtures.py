@@ -48,5 +48,38 @@ class TrainingFixtures(unittest.TestCase):
                 self.assertIn('--dry-run=server', text)
 
 
+    def test_networkpolicy_scoped_and_denied_manifest(self):
+        deny = read_yaml('manifests/networkpolicy/default-deny-ingress.yaml')[0]
+        allow = read_yaml('manifests/networkpolicy/allow-approved-to-web.yaml')[0]
+        self.assertEqual(deny['spec']['policyTypes'], ['Ingress'])
+        self.assertEqual(deny['spec']['podSelector'], {})
+        self.assertNotIn('ingress', deny['spec'])
+        rule = allow['spec']['ingress'][0]
+        self.assertEqual(rule['from'][0]['podSelector']['matchLabels']['access'], 'approved')
+        self.assertEqual(rule['ports'][0]['port'], 8080)
+
+    def test_calico_configuration_disables_kindnet(self):
+        config = read_yaml('config/kind-calico.yaml')[0]
+        self.assertTrue(config['networking']['disableDefaultCNI'])
+        self.assertEqual(config['networking']['podSubnet'], '192.168.0.0/16')
+
+    def test_advanced_rbac_is_name_scoped_and_does_not_list(self):
+        objs = read_yaml('manifests/safe/resource-names-rbac.yaml')
+        role = next(obj for obj in objs if obj['kind'] == 'Role')
+        rule = role['rules'][0]
+        self.assertEqual(rule['resourceNames'], ['approved-config'])
+        self.assertEqual(rule['resources'], ['configmaps'])
+        self.assertEqual(rule['verbs'], ['get'])
+        self.assertTrue(any(obj['kind'] == 'RoleBinding' for obj in objs))
+
+    def test_unsafe_advanced_rbac_is_offline_only(self):
+        objs = read_yaml('manifests/vulnerable/escalation-rbac.yaml')
+        role = next(obj for obj in objs if obj['kind'] == 'ClusterRole')
+        verbs = {verb for rule in role['rules'] for verb in rule['verbs']}
+        self.assertTrue({'escalate', 'bind', 'impersonate'}.issubset(verbs))
+        for script in ('scripts/setup.sh', 'scripts/verify.sh', 'scripts/setup-networkpolicy.sh', 'scripts/verify-networkpolicy.sh'):
+            self.assertNotIn('manifests/vulnerable/', (ROOT / script).read_text())
+
+
 if __name__ == '__main__':
     unittest.main()
