@@ -9,4 +9,5 @@ kind create cluster --name kubesec-training --wait 90s
 kubectl --context kind-kubesec-training apply -f manifests/safe/namespace.yaml
 kubectl --context kind-kubesec-training apply -f manifests/safe/pod.yaml
 kubectl --context kind-kubesec-training apply -f manifests/safe/role.yaml
+kubectl --context kind-kubesec-training apply -f manifests/safe/resource-names-rbac.yaml
 kubectl --context kind-kubesec-training get pods -n kubesec-training

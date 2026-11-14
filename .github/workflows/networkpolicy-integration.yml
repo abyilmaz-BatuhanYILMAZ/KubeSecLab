@@ -1,0 +1,43 @@
+name: Live kind + Calico NetworkPolicy enforcement
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "config/kind-calico.yaml"
+      - "scripts/setup-networkpolicy.sh"
+      - "scripts/verify-networkpolicy.sh"
+      - "manifests/networkpolicy/**"
+      - ".github/workflows/networkpolicy-integration.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  network-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install kind and kubectl
+        uses: helm/kind-action@v1.14.0
+        with:
+          install_only: true
+      - name: Create isolated cluster with Calico CNI
+        run: bash scripts/setup-networkpolicy.sh
+      - name: Test actual allowed and denied Pod network traffic
+        run: bash scripts/verify-networkpolicy.sh
+      - name: Diagnostics on failure
+        if: failure()
+        run: |
+          kubectl --context kind-kubesec-net get pods -A -o wide || true
+          kubectl --context kind-kubesec-net get nodes -o wide || true
+          kubectl --context kind-kubesec-net -n kube-system describe daemonset/calico-node || true
+          kubectl --context kind-kubesec-net -n kubesec-net get events --sort-by=.lastTimestamp || true
+      - name: Delete disposable cluster
+        if: always()
+        run: |
+          if kind get clusters 2>/dev/null | grep -qx kubesec-net; then
+            kind delete cluster --name kubesec-net
+          fi
