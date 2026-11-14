@@ -20,7 +20,7 @@ python -m unittest discover -s tests -v
 python -m kubeguard scan ../KubeSecLab/manifests/safe/
 ```
 
-**Beklenen:** Mevcut 14 KubeGuard kuralı için bulgu yok; ancak bu bir bütüncül güvenlik sertifikası değildir.
+**Beklenen:** Mevcut 20 KubeGuard kuralı için bulgu yok; ancak bu bir bütüncül güvenlik sertifikası değildir.
 
 ## 3. Güvensiz manifestleri tara
 
@@ -57,3 +57,16 @@ python -m kubeguard scan ../KubeSecLab/manifests/vulnerable/ \
 - [ ] Yerel `kind` cluster'ını sildim.
 
 Kapatma: `bash scripts/cleanup.sh` (KubeSecLab dizininden).
+
+
+## 5. NetworkPolicy ve ileri RBAC kontrolleri
+
+KubeGuard'ın `KG015–KG020` kuralları, riskli RBAC fiilleri (`escalate`, `bind`, `impersonate`), Secrets okuma yetkisi, geniş grup binding'leri ve açık ingress/egress tanımlarını denetler.
+
+```bash
+python -m kubeguard scan ../KubeSecLab/manifests/vulnerable/escalation-rbac.yaml --fail-on NONE
+python -m kubeguard scan ../KubeSecLab/manifests/vulnerable/allow-all-networkpolicy.yaml --fail-on NONE
+python -m kubeguard scan ../KubeSecLab/manifests/networkpolicy/ --fail-on NONE
+```
+
+Statik denetimde güvenli manifestin temiz çıkması **gerçek ağ trafiğinin engellendiği** anlamına gelmez. Bu nedenle [Ders 05](05-networkpolicy.md) Calico CNI üzerinden aktif erişim testi yapar; [Ders 06](06-advanced-rbac.md) ise izinleri Kubernetes API'sinde doğrular.
