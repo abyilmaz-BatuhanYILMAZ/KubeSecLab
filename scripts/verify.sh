@@ -32,8 +32,11 @@ for forbidden in \
   "list configmaps" \
   "get secrets"; do
   read -r -a argv <<< "$forbidden"
+  # A denied authorization check can legitimately use exit code 1.
+  # Capture its actual "no" reply instead of letting set -e abort the test.
   result="$(kubectl --context kind-kubesec-training auth can-i "${argv[@]}" \
-    --as="$identity" -n kubesec-training)"
+    --as="$identity" -n kubesec-training || true)"
+  echo "Expected denial: $forbidden => $result"
   [[ "$result" == "no" ]] || { echo "Unexpected privilege: $forbidden -> $result" >&2; exit 1; }
 done
 kubectl --context kind-kubesec-training get pod secure-pod -n kubesec-training
