@@ -78,7 +78,13 @@ class TrainingFixtures(unittest.TestCase):
         verbs = {verb for rule in role['rules'] for verb in rule['verbs']}
         self.assertTrue({'escalate', 'bind', 'impersonate'}.issubset(verbs))
         for script in ('scripts/setup.sh', 'scripts/verify.sh', 'scripts/setup-networkpolicy.sh', 'scripts/verify-networkpolicy.sh'):
-            self.assertNotIn('manifests/vulnerable/', (ROOT / script).read_text())
+            contents = (ROOT / script).read_text()
+            self.assertNotIn('escalation-rbac.yaml', contents)
+            self.assertNotIn('allow-all-networkpolicy.yaml', contents)
+            # The existing insecure Pod is deliberately sent to Pod Security
+            # Admission with --dry-run=server; no unsafe role is applied.
+            if 'manifests/vulnerable/privileged-pod.yaml' in contents:
+                self.assertIn('--dry-run=server', contents)
 
 
 if __name__ == '__main__':
